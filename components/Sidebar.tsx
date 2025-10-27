@@ -41,6 +41,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         setIsOpen(false);
     }
 
+    const handleInstallButtonClick = () => {
+        if (canInstall) {
+            onInstallClick();
+        } else {
+            alert('La aplicación no se puede instalar en este momento.\n\nAsegúrate de estar usando un navegador compatible (como Chrome en escritorio o Android) y que la aplicación no esté ya instalada.');
+        }
+    };
+
     return (
         <>
             <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-dark-card flex-shrink-0 flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -101,13 +109,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                             ))}
                             <li>
                                 <button
-                                    onClick={onInstallClick}
-                                    disabled={!canInstall}
-                                    className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left ${
-                                        !canInstall 
-                                        ? 'text-dark-text-secondary/50 cursor-not-allowed' 
-                                        : 'text-dark-text-secondary hover:bg-dark-border hover:text-white'
-                                    }`}
+                                    onClick={handleInstallButtonClick}
+                                    className="w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left text-dark-text-secondary hover:bg-dark-border hover:text-white"
                                 >
                                     {ICONS.install}
                                     <span className="font-medium">Instalar App</span>
