@@ -1,45 +1,27 @@
-
 import React from 'react';
-import type { MedicalHistory } from '../types';
-import SectionCard from './SectionCard';
-import { ICONS } from '../constants';
+import type { VitalSigns } from '../types';
 
-interface HistorySectionProps {
-  history: MedicalHistory;
+interface VitalsCardProps {
+  vitals: VitalSigns;
+  date: string;
 }
 
-const HistoryList: React.FC<{ title: string; items: string[] | React.ReactNode[] }> = ({ title, items }) => (
-  <div>
-    <h3 className="font-semibold text-slate-600 text-sm mb-1">{title}</h3>
-    <ul className="list-disc list-inside space-y-1 text-sm text-slate-700">
-      {items.map((item, index) => (
-        <li key={index}>{item}</li>
-      ))}
-    </ul>
-  </div>
-);
-
-const HistorySection: React.FC<HistorySectionProps> = ({ history }) => {
-  const immunizationsFormatted = history.immunizations.map(imm => `${imm.vaccine} (${imm.date})`);
-
+const VitalsCard: React.FC<VitalsCardProps> = ({ vitals, date }) => {
   return (
-    <SectionCard title="Historial Médico y Antecedentes" icon={ICONS.history}>
-      <div className="space-y-4">
-        <HistoryList title="Antecedentes Patológicos" items={history.pathological} />
-        <HistoryList title="Antecedentes Familiares" items={history.family} />
-        <HistoryList title="Antecedentes No Patológicos" items={history.nonPathological} />
-        <div>
-           <h3 className="font-semibold text-slate-600 text-sm mb-1">Alergias</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-slate-700">
-             {history.allergies.map((item, index) => (
-                <li key={index} className="text-red-600 font-medium">{item}</li>
-             ))}
-            </ul>
-        </div>
-        <HistoryList title="Inmunizaciones" items={immunizationsFormatted} />
+    <div className="bg-dark-card rounded-lg p-4 h-full">
+      <h3 className="text-md font-semibold text-dark-text-primary mb-3">Signos Vitales Recientes</h3>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-dark-text-primary">
+        <div className="text-lg">TA: <span className="font-bold">{vitals.bloodPressure}</span> mlHg</div>
+        <div className="text-lg">Temp: <span className="font-bold">{vitals.temperature}</span>°C</div>
+        <div className="text-lg">FC: <span className="font-bold">{vitals.heartRate}</span> lpm</div>
+        <div className="text-lg"><span className="font-bold">{vitals.oxygenSaturation}</span>%</div>
       </div>
-    </SectionCard>
+       <div className="grid grid-cols-2 gap-4 text-dark-text-secondary text-xs mt-2">
+            <span>{new Date(date).toLocaleDateString()}</span>
+            <span className="text-right">{new Date(date).toLocaleDateString()}</span>
+       </div>
+    </div>
   );
 };
 
-export default HistorySection;
+export default VitalsCard;

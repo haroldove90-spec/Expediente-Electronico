@@ -1,21 +1,55 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import Dashboard from './components/Dashboard';
-import { patientData } from './constants';
+import { patientData, ICONS } from './constants';
+
+const Sidebar: React.FC = () => {
+    const [activeItem, setActiveItem] = useState('Historial Médico');
+
+    const navItems = [
+        { name: 'Dashboard', icon: ICONS.dashboard },
+        { name: 'Historial Médico', icon: ICONS.history },
+        { name: 'Consultas', icon: ICONS.consultation },
+        { name: 'Medicamentos', icon: ICONS.medication },
+        { name: 'Laboratorio/Imágenes', icon: ICONS.lab },
+        { name: 'Configuración', icon: ICONS.settings },
+    ];
+
+    return (
+        <aside className="w-60 bg-dark-card flex-shrink-0 flex flex-col">
+            <div className="p-4 flex items-center space-x-3 border-b border-dark-border">
+                {ICONS.menu}
+                <h1 className="text-xl font-bold text-dark-text-primary">EHR</h1>
+            </div>
+            <nav className="flex-1 p-4">
+                <ul className="space-y-2">
+                    {navItems.map(item => (
+                        <li key={item.name}>
+                            <a
+                                href="#"
+                                onClick={() => setActiveItem(item.name)}
+                                className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                                    activeItem === item.name 
+                                    ? 'bg-dark-border text-white' 
+                                    : 'text-dark-text-secondary hover:bg-dark-border hover:text-white'
+                                }`}
+                            >
+                                {item.icon}
+                                <span className="font-medium">{item.name}</span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+        </aside>
+    );
+}
+
 
 const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-brand-blue-700">EHR Dashboard Pro</h1>
-          <div className="flex items-center space-x-4">
-             <span className="text-sm font-medium">Dr. Evelyn Reed</span>
-             <img className="h-10 w-10 rounded-full" src="https://picsum.photos/id/237/100/100" alt="Doctor avatar" />
-          </div>
-        </div>
-      </header>
-      <main className="p-4 sm:p-6 lg:p-8">
+    <div className="flex min-h-screen font-sans">
+      <Sidebar />
+      <main className="flex-1 p-6 lg:p-8 bg-dark-bg">
         <Dashboard patient={patientData} />
       </main>
     </div>

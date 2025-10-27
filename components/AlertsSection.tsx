@@ -1,41 +1,28 @@
-
 import React from 'react';
 import type { Alert } from '../types';
-import SectionCard from './SectionCard';
-import { ICONS } from '../constants';
 
-interface AlertsSectionProps {
+interface AlertsCardProps {
   alerts: Alert[];
 }
 
-const alertStyles = {
-  High: 'bg-red-100 border-red-500 text-red-800',
-  Medium: 'bg-yellow-100 border-yellow-500 text-yellow-800',
-  Low: 'bg-blue-100 border-blue-500 text-blue-800',
-};
+const AlertsCard: React.FC<AlertsCardProps> = ({ alerts }) => {
+  const highAlert = alerts.find(a => a.severity === 'High');
+  const otherAlerts = alerts.filter(a => a.severity !== 'High');
 
-const alertIcons = {
-    Allergy: '💊',
-    'Chronic Condition': '❤️',
-    Reminder: '⏰'
-}
-
-const AlertsSection: React.FC<AlertsSectionProps> = ({ alerts }) => {
   return (
-    <SectionCard title="Alertas y Recordatorios" icon={ICONS.alert}>
-      <div className="space-y-3">
-        {alerts.map((alert) => (
-          <div key={alert.id} className={`p-3 rounded-lg border-l-4 ${alertStyles[alert.severity]}`}>
-            <p className="font-bold flex items-center">
-                <span className="mr-2">{alertIcons[alert.type]}</span>
-                {alert.type}
-            </p>
-            <p className="text-sm">{alert.message}</p>
-          </div>
+    <div className="bg-dark-card rounded-lg p-4 h-full">
+      {highAlert && (
+        <div className="bg-red-500 text-white font-bold text-center p-3 rounded-md mb-3 text-lg">
+          {highAlert.message}
+        </div>
+      )}
+      <ul className="space-y-2 text-sm text-dark-text-secondary list-disc list-inside">
+        {otherAlerts.map(alert => (
+            <li key={alert.id}><span className="text-dark-text-primary">{alert.message}</span></li>
         ))}
-      </div>
-    </SectionCard>
+      </ul>
+    </div>
   );
 };
 
-export default AlertsSection;
+export default AlertsCard;
