@@ -27,6 +27,48 @@ const App: React.FC = () => {
     const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
 
     useEffect(() => {
+        // PWA Setup: Create manifest and register service worker dynamically to make the app installable.
+        const manifest = {
+            "short_name": "EHR Pro",
+            "name": "EHR Dashboard Pro",
+            "description": "A modern, responsive Electronic Health Record (EHR) dashboard.",
+            "icons": [{ "src": "/vite.svg", "type": "image/svg+xml", "sizes": "any" }],
+            "start_url": ".",
+            "display": "standalone",
+            "theme_color": "#0F172A",
+            "background_color": "#0F172A"
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const linkEl = document.createElement('link');
+        linkEl.rel = 'manifest';
+        linkEl.href = manifestUrl;
+        document.head.appendChild(linkEl);
+
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'ehr-dashboard-pro-cache-v1';
+                const urlsToCache = ['/', '/index.html'];
+                self.addEventListener('install', event => {
+                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl)
+                .then(reg => console.log('ServiceWorker registered.', reg))
+                .catch(err => console.error('ServiceWorker registration failed:', err));
+        }
+
+        return () => {
+            document.head.removeChild(linkEl);
+        };
+    }, []);
+
+    useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setInstallPromptEvent(e);
