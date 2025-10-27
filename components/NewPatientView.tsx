@@ -1,169 +1,206 @@
 import React, { useState } from 'react';
-import { blankPatient } from '../constants';
-import type { Patient, PatientDemographics, Immunization, Medication } from '../types';
+import type { Patient, Medication, Immunization, LabResult, ImagingResult, Consultation, Diagnosis } from '../types';
+import { Input, Select, Fieldset, Textarea } from './shared/FormControls';
+import { GoogleGenAI } from "@google/genai";
+import { blankPatient, blankMedication } from '../constants';
+import { ICONS } from '../constants';
 
 interface NewPatientViewProps {
-  onSave: (patient: Patient) => void;
-  onCancel: () => void;
+    onPatientAdded: (patient: Patient) => void;
 }
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="bg-dark-card rounded-lg p-6">
-    <h2 className="text-xl font-semibold text-dark-text-primary border-b border-dark-border pb-4 mb-4">{title}</h2>
-    <div className="space-y-4">{children}</div>
-  </div>
-);
+const NewPatientView: React.FC<NewPatientViewProps> = ({ onPatientAdded }) => {
+    const [patientData, setPatientData] = useState<Patient>(JSON.parse(JSON.stringify(blankPatient)));
+    const [summary, setSummary] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
 
-const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
-  <div>
-    <label htmlFor={props.id} className="block text-sm font-medium text-dark-text-secondary mb-1">{label}</label>
-    <input {...props} className="w-full bg-dark-bg border border-dark-border rounded-md p-2 text-dark-text-primary focus:ring-accent-cyan focus:border-accent-cyan" />
-  </div>
-);
-
-const TextArea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => (
-    <div>
-        <label htmlFor={props.id} className="block text-sm font-medium text-dark-text-secondary mb-1">{label}</label>
-        <textarea {...props} rows={3} className="w-full bg-dark-bg border border-dark-border rounded-md p-2 text-dark-text-primary focus:ring-accent-cyan focus:border-accent-cyan" />
-    </div>
-);
-
-
-const NewPatientView: React.FC<NewPatientViewProps> = ({ onSave, onCancel }) => {
-  const [patient, setPatient] = useState<Patient>(blankPatient);
-
-  const handleDemographicsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setPatient(prev => ({ ...prev, demographics: { ...prev.demographics, [name]: value } }));
-  };
-  
-  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPatient(prev => ({ ...prev, demographics: { ...prev.demographics, contactInfo: { ...prev.demographics.contactInfo, [name]: value } } }));
-  };
-
-  const handleEmergencyContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPatient(prev => ({ ...prev, demographics: { ...prev.demographics, emergencyContact: { ...prev.demographics.emergencyContact, [name]: value } } }));
-  };
-  
-  const handleDynamicListChange = (section: 'pathological' | 'family' | 'nonPathological' | 'allergies', index: number, value: string) => {
-    setPatient(prev => {
-        const list = [...prev.medicalHistory[section]];
-        list[index] = value;
-        return { ...prev, medicalHistory: { ...prev.medicalHistory, [section]: list } };
-    });
-  };
-
-  const addToList = (section: 'pathological' | 'family' | 'nonPathological' | 'allergies') => {
-      setPatient(prev => ({ ...prev, medicalHistory: { ...prev.medicalHistory, [section]: [...prev.medicalHistory[section], ''] } }));
-  }
-
-  const removeFromList = (section: 'pathological' | 'family' | 'nonPathological' | 'allergies', index: number) => {
-      setPatient(prev => ({ ...prev, medicalHistory: { ...prev.medicalHistory, [section]: prev.medicalHistory[section].filter((_, i) => i !== index) } }));
-  }
-
-  const handleMedicationChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPatient(prev => {
-        const medications = [...prev.medications];
-        medications[index] = { ...medications[index], [name]: value, status: 'Active' };
-        return { ...prev, medications };
-    });
-  };
-
-  const addMedication = () => {
-    setPatient(prev => ({...prev, medications: [...prev.medications, { name: '', dosage: '', route: '', frequency: '', startDate: '', status: 'Active'}]}));
-  }
-
-  const removeMedication = (index: number) => {
-    setPatient(prev => ({ ...prev, medications: prev.medications.filter((_, i) => i !== index)}));
-  }
-
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!patient.demographics.fullName) {
-        alert("El nombre completo del paciente es obligatorio.");
-        return;
+    const handleDemographicsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { id, value } = e.target;
+        setPatientData(prev => ({...prev, demographics: {...prev.demographics, [id]: value }}));
     }
-    onSave(patient);
-  };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-8">
-      <h1 className="text-3xl font-bold text-dark-text-primary">Registrar Nuevo Paciente</h1>
-      
-      <Section title="1. Datos Demográficos del Paciente">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Nombre Completo" name="fullName" value={patient.demographics.fullName} onChange={handleDemographicsChange} required />
-          <Input label="Fecha de Nacimiento" name="dateOfBirth" type="date" value={patient.demographics.dateOfBirth} onChange={handleDemographicsChange} />
-          <Input label="Edad" name="age" type="number" value={patient.demographics.age} onChange={handleDemographicsChange} />
-          <div>
-            <label className="block text-sm font-medium text-dark-text-secondary mb-1">Género</label>
-            <select name="gender" value={patient.demographics.gender} onChange={handleDemographicsChange} className="w-full bg-dark-bg border border-dark-border rounded-md p-2 text-dark-text-primary focus:ring-accent-cyan focus:border-accent-cyan">
-              <option value="Male">Masculino</option>
-              <option value="Female">Femenino</option>
-              <option value="Other">Otro</option>
-            </select>
-          </div>
-          <Input label="Número de Seguridad Social" name="socialSecurityNumber" value={patient.demographics.socialSecurityNumber} onChange={handleDemographicsChange} />
-        </div>
-        <h3 className="text-lg font-semibold text-dark-text-primary pt-4 mt-4 border-t border-dark-border">Información de Contacto</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Dirección" name="address" value={patient.demographics.contactInfo.address} onChange={handleContactChange} />
-            <Input label="Teléfono" name="phone" type="tel" value={patient.demographics.contactInfo.phone} onChange={handleContactChange} />
-            <Input label="Email" name="email" type="email" value={patient.demographics.contactInfo.email} onChange={handleContactChange} />
-        </div>
-         <h3 className="text-lg font-semibold text-dark-text-primary pt-4 mt-4 border-t border-dark-border">Contacto de Emergencia</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input label="Nombre" name="name" value={patient.demographics.emergencyContact.name} onChange={handleEmergencyContactChange} />
-            <Input label="Relación" name="relationship" value={patient.demographics.emergencyContact.relationship} onChange={handleEmergencyContactChange} />
-            <Input label="Teléfono" name="phone" type="tel" value={patient.demographics.emergencyContact.phone} onChange={handleEmergencyContactChange} />
-        </div>
-      </Section>
+    const handleContactChange = (field: 'contactInfo' | 'emergencyContact', e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setPatientData(prev => ({...prev, demographics: {...prev.demographics, [field]: { ...prev.demographics[field], [id]: value }}}));
+    }
+    
+    const handleHistoryChange = (field: 'pathological' | 'family' | 'nonPathological', value: string) => {
+        setPatientData(prev => ({ ...prev, medicalHistory: { ...prev.medicalHistory, [field]: value.split(',').map(s => s.trim()) } }));
+    }
 
-      <Section title="2. Historial Médico y Antecedentes">
-         <h3 className="font-semibold text-dark-text-primary">Antecedentes (Patológicos, Familiares, etc.)</h3>
-        {['pathological', 'family', 'nonPathological', 'allergies'].map(section => (
-            <div key={section}>
-                <label className="block text-sm font-medium text-dark-text-secondary capitalize mb-2">{section.replace(/([A-Z])/g, ' $1')}</label>
-                {patient.medicalHistory[section as keyof typeof patient.medicalHistory].map((item: any, index: number) => (
-                     <div key={index} className="flex items-center gap-2 mb-2">
-                        <Input type="text" label="" value={item} onChange={e => handleDynamicListChange(section as any, index, e.target.value)} />
-                        <button type="button" onClick={() => removeFromList(section as any, index)} className="text-red-500 p-2 rounded-md hover:bg-dark-border mt-1">Eliminar</button>
+    const handleDynamicListChange = <T,>(listName: keyof Patient, index: number, field: keyof T, value: any) => {
+        setPatientData(prev => {
+            const list = [...prev[listName] as T[]];
+            list[index] = { ...list[index], [field]: value };
+            return { ...prev, [listName]: list };
+        });
+    }
+    
+    const handleHistoryListChange = <T,>(listName: keyof Patient['medicalHistory'], index: number, field: keyof T, value: any) => {
+         setPatientData(prev => {
+            const list = [...prev.medicalHistory[listName] as T[]];
+            list[index] = { ...list[index], [field]: value };
+            return { ...prev, medicalHistory: {...prev.medicalHistory, [listName]: list }};
+        });
+    }
+
+    const handleAddItem = <T,>(listName: keyof Patient, newItem: T) => {
+        setPatientData(prev => ({ ...prev, [listName]: [...prev[listName] as T[], newItem] }));
+    }
+    
+     const handleAddHistoryItem = <T,>(listName: keyof Patient['medicalHistory'], newItem: T) => {
+        setPatientData(prev => ({ ...prev, medicalHistory: {...prev.medicalHistory, [listName]: [...prev.medicalHistory[listName] as T[], newItem] }}));
+    }
+
+    const handleRemoveItem = (listName: keyof Patient, index: number) => {
+        setPatientData(prev => ({ ...prev, [listName]: (prev[listName] as any[]).filter((_, i) => i !== index) }));
+    }
+    
+    const handleRemoveHistoryItem = (listName: keyof Patient['medicalHistory'], index: number) => {
+        setPatientData(prev => ({ ...prev, medicalHistory: {...prev.medicalHistory, [listName]: (prev.medicalHistory[listName] as any[]).filter((_, i) => i !== index) }}));
+    }
+
+    const handleImageUpload = (index: number, file: File) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            handleDynamicListChange<ImagingResult>('imagingResults', index, 'imageDataUrl', reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const finalPatient = {
+            ...patientData,
+            demographics: {
+                ...patientData.demographics,
+                patientId: `P${Date.now().toString().slice(-6)}`,
+                age: patientData.demographics.dateOfBirth ? new Date().getFullYear() - new Date(patientData.demographics.dateOfBirth).getFullYear() : 0,
+            }
+        };
+        onPatientAdded(finalPatient);
+    };
+
+    const generateSummary = async () => {
+        if (!process.env.API_KEY) {
+            alert("API key not configured.");
+            return;
+        }
+        setIsGenerating(true);
+        setSummary('');
+        try {
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+            const prompt = `Generate a concise, professional summary for a new patient registration based on this data: ${JSON.stringify(patientData)}. Highlight any missing information that might be important.`;
+            const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
+            setSummary(response.text);
+        } catch (error) {
+            console.error("Error generating summary:", error);
+            alert("Failed to generate summary. See console for details.");
+        } finally {
+            setIsGenerating(false);
+        }
+    }
+
+
+    return (
+        <div className="text-dark-text-primary">
+            <h1 className="text-3xl font-bold mb-6">Registrar Nuevo Paciente</h1>
+            <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto">
+                <Fieldset legend="Información Demográfica">
+                    <Input label="Nombre Completo" id="fullName" type="text" value={patientData.demographics.fullName} onChange={handleDemographicsChange} required />
+                    <Input label="Fecha de Nacimiento" id="dateOfBirth" type="date" value={patientData.demographics.dateOfBirth} onChange={handleDemographicsChange} required />
+                    <Select label="Género" id="gender" value={patientData.demographics.gender} onChange={handleDemographicsChange}>
+                        <option value="Male">Masculino</option>
+                        <option value="Female">Femenino</option>
+                        <option value="Other">Otro</option>
+                    </Select>
+                     <Input label="Dirección" id="address" type="text" value={patientData.demographics.contactInfo.address} onChange={(e) => handleContactChange('contactInfo', e)} />
+                     <Input label="Teléfono" id="phone" type="tel" value={patientData.demographics.contactInfo.phone} onChange={(e) => handleContactChange('contactInfo', e)} />
+                     <Input label="Email" id="email" type="email" value={patientData.demographics.contactInfo.email} onChange={(e) => handleContactChange('contactInfo', e)} />
+                </Fieldset>
+                
+                <Fieldset legend="Historial Médico">
+                     <Textarea label="Antecedentes Patológicos (separados por comas)" id="pathological" value={patientData.medicalHistory.pathological.join(', ')} onChange={(e) => handleHistoryChange('pathological', e.target.value)} />
+                     <Textarea label="Antecedentes Familiares (separados por comas)" id="family" value={patientData.medicalHistory.family.join(', ')} onChange={(e) => handleHistoryChange('family', e.target.value)} />
+                     <div className="md:col-span-2 space-y-4">
+                        <h3 className="text-md font-semibold">Alergias</h3>
+                        {patientData.medicalHistory.allergies.map((allergy, index) => (
+                             <div key={index} className="flex items-center gap-2">
+                                <Input label="" id={`allergy-${index}`} type="text" value={allergy} onChange={(e) => handleHistoryListChange<string[]>('allergies', index, '' as any, e.target.value)} className="flex-grow" />
+                                <button type="button" onClick={() => handleRemoveHistoryItem('allergies', index)} className="text-red-500 p-2 mt-1">{ICONS.close}</button>
+                             </div>
+                        ))}
+                         <button type="button" onClick={() => handleAddHistoryItem('allergies', '')} className="text-accent-cyan text-sm">+ Añadir Alergia</button>
                     </div>
-                ))}
-                <button type="button" onClick={() => addToList(section as any)} className="text-accent-cyan text-sm mt-1">+ Agregar</button>
-            </div>
-        ))}
-      </Section>
-
-       <Section title="3. Medicamentos Actuales">
-            {patient.medications.map((med, index) => (
-                <div key={index} className="p-4 rounded-md border border-dark-border space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                       <Input label="Nombre" name="name" value={med.name} onChange={e => handleMedicationChange(index, e)} />
-                       <Input label="Dosis" name="dosage" value={med.dosage} onChange={e => handleMedicationChange(index, e)} />
-                       <Input label="Vía/Frecuencia" name="route" value={med.route} onChange={e => handleMedicationChange(index, e)} />
-                       <Input label="Fecha Inicio" name="startDate" type="date" value={med.startDate} onChange={e => handleMedicationChange(index, e)} />
+                     <div className="md:col-span-2 space-y-4">
+                        <h3 className="text-md font-semibold">Inmunizaciones</h3>
+                        {patientData.medicalHistory.immunizations.map((item, index) => (
+                             <div key={index} className="flex items-center gap-2">
+                                <Input label="Vacuna" id={`vaccine-${index}`} type="text" value={item.vaccine} onChange={(e) => handleHistoryListChange<Immunization>('immunizations', index, 'vaccine', e.target.value)} />
+                                <Input label="Fecha" id={`vaccine-date-${index}`} type="date" value={item.date} onChange={(e) => handleHistoryListChange<Immunization>('immunizations', index, 'date', e.target.value)} />
+                                <button type="button" onClick={() => handleRemoveHistoryItem('immunizations', index)} className="text-red-500 p-2 mt-5">{ICONS.close}</button>
+                             </div>
+                        ))}
+                         <button type="button" onClick={() => handleAddHistoryItem('immunizations', {vaccine: '', date: ''})} className="text-accent-cyan text-sm">+ Añadir Inmunización</button>
                     </div>
-                    <button type="button" onClick={() => removeMedication(index)} className="text-red-500 text-sm">Eliminar Medicamento</button>
+                </Fieldset>
+                
+                 <Fieldset legend="Medicamentos">
+                    {patientData.medications.map((med, index) => (
+                        <div key={index} className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-dark-border pb-4">
+                             <Input label="Nombre" id={`med-name-${index}`} type="text" value={med.name} onChange={e => handleDynamicListChange<Medication>('medications', index, 'name', e.target.value)} />
+                             <Input label="Dosis" id={`med-dosage-${index}`} type="text" value={med.dosage} onChange={e => handleDynamicListChange<Medication>('medications', index, 'dosage', e.target.value)} />
+                             <Input label="Frecuencia" id={`med-freq-${index}`} type="text" value={med.frequency} onChange={e => handleDynamicListChange<Medication>('medications', index, 'frequency', e.target.value)} />
+                             <Input label="Fecha Inicio" id={`med-start-${index}`} type="date" value={med.startDate} onChange={e => handleDynamicListChange<Medication>('medications', index, 'startDate', e.target.value)} />
+                             <Select label="Estado" id={`med-status-${index}`} value={med.status} onChange={e => handleDynamicListChange<Medication>('medications', index, 'status', e.target.value)}>
+                                <option value="Active">Activo</option>
+                                <option value="Inactive">Inactivo</option>
+                             </Select>
+                             <button type="button" onClick={() => handleRemoveItem('medications', index)} className="text-red-500 justify-self-start md:mt-6">{ICONS.close}</button>
+                        </div>
+                    ))}
+                     <div className="md:col-span-2">
+                        <button type="button" onClick={() => handleAddItem('medications', { ...blankMedication })} className="text-accent-cyan text-sm">+ Añadir Medicamento</button>
+                    </div>
+                </Fieldset>
+
+                <Fieldset legend="Resultados de Imágenes">
+                    {patientData.imagingResults.map((img, index) => (
+                         <div key={index} className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-dark-border pb-4">
+                             <Input label="Nombre del Estudio" id={`img-name-${index}`} type="text" value={img.studyName} onChange={e => handleDynamicListChange<ImagingResult>('imagingResults', index, 'studyName', e.target.value)} />
+                             <Input label="Fecha" id={`img-date-${index}`} type="date" value={img.date} onChange={e => handleDynamicListChange<ImagingResult>('imagingResults', index, 'date', e.target.value)} />
+                             <Textarea label="Reporte" id={`img-report-${index}`} value={img.report} onChange={e => handleDynamicListChange<ImagingResult>('imagingResults', index, 'report', e.target.value)} />
+                             <div>
+                                <Input label="Subir Imagen" id={`img-file-${index}`} type="file" accept="image/*" onChange={e => e.target.files && handleImageUpload(index, e.target.files[0])} />
+                                {img.imageDataUrl && <img src={img.imageDataUrl} alt="Preview" className="w-24 h-24 object-cover mt-2 rounded"/>}
+                             </div>
+                              <button type="button" onClick={() => handleRemoveItem('imagingResults', index)} className="text-red-500 justify-self-start">{ICONS.close}</button>
+                         </div>
+                    ))}
+                     <div className="md:col-span-2">
+                         <button type="button" onClick={() => handleAddItem('imagingResults', {id: '', studyName: '', date: '', report: '', imageDataUrl: ''})} className="text-accent-cyan text-sm">+ Añadir Resultado de Imagen</button>
+                    </div>
+                </Fieldset>
+
+                <div className="bg-dark-card p-4 rounded-lg space-y-4">
+                    <div className="flex justify-between items-center">
+                         <h3 className="text-lg font-semibold text-dark-text-primary">AI Summary</h3>
+                        <button type="button" onClick={generateSummary} disabled={isGenerating} className="bg-dark-border text-dark-text-primary font-bold py-2 px-4 rounded-lg hover:bg-dark-border/70 disabled:opacity-50">
+                            {isGenerating ? 'Generando...' : 'Generar Resumen'}
+                        </button>
+                    </div>
+                   {summary && <div className="text-dark-text-secondary p-4 bg-dark-bg rounded-md whitespace-pre-wrap">{summary}</div>}
                 </div>
-            ))}
-            <button type="button" onClick={addMedication} className="text-accent-cyan text-sm mt-2">+ Agregar Medicamento</button>
-       </Section>
-       
-       <div className="flex justify-end gap-4 pt-4">
-            <button type="button" onClick={onCancel} className="bg-dark-border text-dark-text-primary font-bold py-2 px-6 rounded-lg hover:bg-dark-border/70 transition-colors">
-                Cancelar
-            </button>
-            <button type="submit" className="bg-accent-cyan text-dark-bg font-bold py-2 px-6 rounded-lg hover:opacity-90 transition-opacity">
-                Guardar Paciente
-            </button>
+
+                <div className="flex justify-end pt-4">
+                    <button type="submit" className="bg-accent-cyan text-dark-bg font-bold py-2 px-6 rounded-lg hover:opacity-90 transition-opacity">
+                        Registrar Paciente
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
-  );
-};
+    )
+}
 
 export default NewPatientView;

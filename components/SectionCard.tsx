@@ -1,7 +1,11 @@
 import React from 'react';
 import { ICONS } from '../constants';
 
-const AppointmentsCard: React.FC = () => {
+interface AppointmentsCardProps {
+  onViewHistory: () => void;
+}
+
+const AppointmentsCard: React.FC<AppointmentsCardProps> = ({ onViewHistory }) => {
   return (
     <div className="bg-dark-card rounded-lg p-4 h-full flex flex-col justify-between">
       <div>
@@ -9,7 +13,9 @@ const AppointmentsCard: React.FC = () => {
         {/* Content for appointments can be added here */}
         <p className="text-sm text-dark-text-secondary">No upcoming tasks.</p>
       </div>
-      <button className="mt-4 w-full flex items-center justify-center space-x-2 text-sm text-dark-text-primary bg-dark-border hover:bg-dark-border/70 font-semibold py-2 px-4 rounded-lg transition-colors">
+      <button 
+        onClick={onViewHistory}
+        className="mt-4 w-full flex items-center justify-center space-x-2 text-sm text-dark-text-primary bg-dark-border hover:bg-dark-border/70 font-semibold py-2 px-4 rounded-lg transition-colors">
         {ICONS.clock}
         <span>Ver Historial Completo</span>
       </button>

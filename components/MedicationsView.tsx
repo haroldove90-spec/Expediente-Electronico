@@ -1,17 +1,31 @@
 import React, { useState } from 'react';
 import type { Medication } from '../types';
+import NewMedicationView from './NewMedicationView';
 
-const MedicationsView: React.FC<{ medications: Medication[] }> = ({ medications }) => {
+interface MedicationsViewProps {
+  medications: Medication[];
+  onAddMedication: (medication: Medication) => void;
+}
+
+const MedicationsView: React.FC<MedicationsViewProps> = ({ medications, onAddMedication }) => {
   const [activeTab, setActiveTab] = useState<'Active' | 'Inactive'>('Active');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const filteredMeds = medications.filter(m => m.status === activeTab);
+
+  const handleAddSubmit = (medication: Medication) => {
+    onAddMedication(medication);
+    setIsModalOpen(false);
+  }
 
   return (
     <div>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
             <h1 className="text-3xl font-bold text-dark-text-primary">Medicamentos</h1>
-            <button className="bg-accent-cyan text-dark-bg font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity w-full sm:w-auto">
-            + Nuevo Medicamento
+            <button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-accent-cyan text-dark-bg font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity w-full sm:w-auto">
+                + Nuevo Medicamento
             </button>
         </div>
 
@@ -57,15 +71,26 @@ const MedicationsView: React.FC<{ medications: Medication[] }> = ({ medications 
                             <tr key={i} className="border-b border-dark-border hover:bg-dark-border/20">
                                 <th scope="row" className="px-6 py-4 font-medium text-dark-text-primary whitespace-nowrap">{med.name}</th>
                                 <td className="px-6 py-4">{med.dosage}</td>
-                                <td className="px-6 py-4">{med.route}</td>
+                                <td className="px-6 py-4">{med.route} / {med.frequency}</td>
                                 <td className="px-6 py-4">{new Date(med.startDate).toLocaleDateString()}</td>
                                 <td className="px-6 py-4">{med.endDate ? new Date(med.endDate).toLocaleDateString() : 'N/A'}</td>
                             </tr>
                         ))}
+                         {filteredMeds.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="text-center py-8 text-dark-text-secondary">No hay medicamentos en esta categoría.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
         </div>
+        {isModalOpen && (
+            <NewMedicationView 
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleAddSubmit}
+            />
+        )}
     </div>
   );
 };

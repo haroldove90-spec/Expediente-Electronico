@@ -18,8 +18,16 @@ const PlaceholderCard = () => (
     </div>
 );
 
+interface DashboardProps {
+  patient: Patient;
+  setActiveView: (view: string) => void;
+}
 
-const Dashboard: React.FC<{ patient: Patient }> = ({ patient }) => {
+const Dashboard: React.FC<DashboardProps> = ({ patient, setActiveView }) => {
+  const latestConsultation = patient.consultations?.length > 0
+    ? [...patient.consultations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    : null;
+
   return (
     <div className="text-dark-text-primary">
       <PatientHeader demographics={patient.demographics} />
@@ -29,7 +37,7 @@ const Dashboard: React.FC<{ patient: Patient }> = ({ patient }) => {
             <AlertsCard alerts={patient.alerts} />
         </div>
         <div className="lg:col-span-1">
-            <VitalsCard vitals={patient.consultations[0].physicalExam.vitals} date={patient.consultations[0].date} />
+            <VitalsCard vitals={latestConsultation?.physicalExam.vitals} date={latestConsultation?.date} />
         </div>
         <div className="lg:col-span-1">
            <PlaceholderCard />
@@ -52,7 +60,7 @@ const Dashboard: React.FC<{ patient: Patient }> = ({ patient }) => {
         </div>
 
         <div className="lg:col-span-1">
-            <AppointmentsCard />
+            <AppointmentsCard onViewHistory={() => setActiveView('Consultas')} />
         </div>
       </div>
     </div>

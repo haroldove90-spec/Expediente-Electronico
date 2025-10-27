@@ -81,7 +81,7 @@ export interface ImagingResult {
   studyName: string;
   date: string;
   report: string;
-  thumbnailUrl: string;
+  imageDataUrl: string; // Changed from thumbnailUrl
 }
 
 export interface Medication {
