@@ -7,7 +7,6 @@ import MedicationsView from './components/MedicationsView';
 import LabsAndImagesView from './components/LabsAndImagesView';
 import SettingsView from './components/SettingsView';
 import NewPatientView from './components/NewPatientView';
-import InstallInstructionsModal from './components/InstallInstructionsModal';
 import { ICONS, PATIENTS_DATA } from './constants';
 import type { Patient, Medication } from './types';
 
@@ -22,223 +21,135 @@ const App: React.FC = () => {
         }
     });
 
-    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(patients.length > 0 ? patients[0].demographics.patientId : null);
     const [activeView, setActiveView] = useState('Dashboard');
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
-    const [isInstalled, setIsInstalled] = useState(false);
-    const [showInstallInstructions, setShowInstallInstructions] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
+        patients.length > 0 ? patients[0].demographics.patientId : null
+    );
+     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [isAppInstalled, setIsAppInstalled] = useState(false);
 
-    const isIos = () => {
-        const userAgent = window.navigator.userAgent.toLowerCase();
-        // More robust check for iPad on iOS 13+
-        return /iphone|ipad|ipod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    };
 
+    // Persist patients to localStorage
     useEffect(() => {
-        // Check if running as a PWA
-        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-            setIsInstalled(true);
+        localStorage.setItem('ehr-patients', JSON.stringify(patients));
+    }, [patients]);
+    
+    // Check installation status
+    useEffect(() => {
+        const handleAppInstalled = () => {
+            setIsAppInstalled(true);
+            setDeferredPrompt(null);
+        };
+        
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            setIsAppInstalled(true);
         }
 
-        // PWA Setup: Create manifest and register service worker dynamically to make the app installable.
-        const manifest = {
-            "short_name": "HC",
-            "name": "Historial Clinico",
-            "description": "Un moderno y responsivo tablero de Historial Clínico Electrónico (HCE) para profesionales de la salud.",
-            "icons": [{ "src": "/vite.svg", "type": "image/svg+xml", "sizes": "any" }],
-            "start_url": ".",
-            "display": "fullscreen",
-            "theme_color": "#0F172A",
-            "background_color": "#0F172A"
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-        const manifestUrl = URL.createObjectURL(manifestBlob);
-        const linkEl = document.createElement('link');
-        linkEl.rel = 'manifest';
-        linkEl.href = manifestUrl;
-        document.head.appendChild(linkEl);
-
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'historial-clinico-cache-v1';
-                const urlsToCache = ['/', '/index.html'];
-                self.addEventListener('install', event => {
-                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
-                });
-                self.addEventListener('fetch', event => {
-                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swUrl)
-                .then(reg => console.log('ServiceWorker registered.', reg))
-                .catch(err => console.error('ServiceWorker registration failed:', err));
-        }
-
-        return () => {
-            if (document.head.contains(linkEl)) {
-                document.head.removeChild(linkEl);
-            }
-        };
+        window.addEventListener('appinstalled', handleAppInstalled);
+        return () => window.removeEventListener('appinstalled', handleAppInstalled);
     }, []);
 
+    // Listen for the browser's install prompt
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
-            setInstallPromptEvent(e);
+            if (!isAppInstalled) {
+                 setDeferredPrompt(e);
+            }
         };
-
-        const handleAppInstalled = () => {
-            setInstallPromptEvent(null);
-            setIsInstalled(true);
-        };
-
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        window.addEventListener('appinstalled', handleAppInstalled);
+        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    }, [isAppInstalled]);
 
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            window.removeEventListener('appinstalled', handleAppInstalled);
-        };
-    }, []);
-
-    const savePatients = (updatedPatients: Patient[]) => {
-        setPatients(updatedPatients);
-        localStorage.setItem('ehr-patients', JSON.stringify(updatedPatients));
-    };
-
-    useEffect(() => {
-        if (!selectedPatientId && patients.length > 0) {
-            setSelectedPatientId(patients[0].demographics.patientId);
+    const handleInstallClick = async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            setDeferredPrompt(null);
         }
-    }, [patients, selectedPatientId]);
-
-    const handleSelectPatient = (patientId: string) => {
-        setSelectedPatientId(patientId);
-        setActiveView('Dashboard'); // Reset to dashboard on patient switch
     };
 
-    const handleRegisterNew = () => {
-        setActiveView('Register Patient');
-    }
-
-    const handleAddNewPatient = (newPatient: Patient) => {
-        const updatedPatients = [...patients, newPatient];
-        savePatients(updatedPatients);
+    const handlePatientAdded = (newPatient: Patient) => {
+        setPatients(prev => [...prev, newPatient]);
         setSelectedPatientId(newPatient.demographics.patientId);
         setActiveView('Dashboard');
-    }
+    };
 
-    const handleAddNewMedication = (newMedication: Medication) => {
-        if (!selectedPatientId) return;
-
-        const updatedPatients = patients.map(p => {
+    const handleAddMedication = (newMedication: Medication) => {
+         if (!selectedPatientId) return;
+        setPatients(prev => prev.map(p => {
             if (p.demographics.patientId === selectedPatientId) {
-                // Create a new patient object with the new medication
-                return {
-                    ...p,
-                    medications: [...p.medications, newMedication]
-                };
+                return { ...p, medications: [...p.medications, newMedication] };
             }
             return p;
-        });
-        savePatients(updatedPatients);
+        }));
     };
 
-    const handleInstallClick = () => {
-        if (installPromptEvent) {
-            const promptEvent = installPromptEvent as any;
-            promptEvent.prompt();
-            promptEvent.userChoice.then((choiceResult: { outcome: string }) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the A2HS prompt');
-                } else {
-                    console.log('User dismissed the A2HS prompt');
-                }
-                setInstallPromptEvent(null);
-            });
-        } else {
-            // Fallback for iOS and other browsers that don't support the prompt
-            setShowInstallInstructions(true);
-        }
-    };
+    const selectedPatient = useMemo(() => 
+        patients.find(p => p.demographics.patientId === selectedPatientId),
+        [patients, selectedPatientId]
+    );
 
-    const selectedPatient = useMemo(() => {
-        return patients.find(p => p.demographics.patientId === selectedPatientId);
-    }, [patients, selectedPatientId]);
-
-    const renderContent = () => {
-        if (activeView === 'Register Patient') {
-            return <NewPatientView onPatientAdded={handleAddNewPatient} />;
-        }
-
+    const renderActiveView = () => {
         if (!selectedPatient) {
-            return (
-                <div className="flex items-center justify-center h-full text-center p-4">
-                    <div>
-                        <h2 className="text-2xl font-semibold text-dark-text-primary">No hay pacientes registrados</h2>
-                        <p className="text-dark-text-secondary mt-2">Por favor, registre un nuevo paciente para comenzar.</p>
+            if (activeView !== 'Register Patient') {
+                return (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                        <h2 className="text-2xl font-semibold mb-4">No hay pacientes seleccionados</h2>
+                        <p className="text-dark-text-secondary mb-6">Por favor, registre un nuevo paciente para comenzar.</p>
                         <button 
-                            onClick={handleRegisterNew}
-                            className="mt-4 bg-accent-cyan text-dark-bg font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
-                            + Registrar Nuevo Paciente
+                            onClick={() => setActiveView('Register Patient')}
+                            className="bg-accent-cyan text-dark-bg font-bold py-2 px-6 rounded-lg hover:opacity-90 transition-opacity">
+                            Registrar Paciente
                         </button>
                     </div>
-                </div>
-            );
+                );
+            }
         }
-
+        
         switch (activeView) {
             case 'Dashboard':
-                return <Dashboard patient={selectedPatient} setActiveView={setActiveView} />;
+                return selectedPatient && <Dashboard patient={selectedPatient} setActiveView={setActiveView} />;
             case 'Historial Médico':
-                return <MedicalHistoryView patient={selectedPatient} />;
+                return selectedPatient && <MedicalHistoryView patient={selectedPatient} />;
             case 'Consultas':
-                return <ConsultationsView consultations={selectedPatient.consultations} />;
+                return selectedPatient && <ConsultationsView consultations={selectedPatient.consultations} />;
             case 'Medicamentos':
-                return <MedicationsView medications={selectedPatient.medications} onAddMedication={handleAddNewMedication} />;
+                return selectedPatient && <MedicationsView medications={selectedPatient.medications} onAddMedication={handleAddMedication} />;
             case 'Laboratorio/Imágenes':
-                return <LabsAndImagesView labResults={selectedPatient.labResults} imagingResults={selectedPatient.imagingResults} />;
+                return selectedPatient && <LabsAndImagesView labResults={selectedPatient.labResults} imagingResults={selectedPatient.imagingResults} />;
             case 'Configuración':
                 return <SettingsView />;
+            case 'Register Patient':
+                return <NewPatientView onPatientAdded={handlePatientAdded} />;
             default:
-                return <Dashboard patient={selectedPatient} setActiveView={setActiveView} />;
+                return selectedPatient && <Dashboard patient={selectedPatient} setActiveView={setActiveView}/>;
         }
     };
     
-    // Show install button if the app is not installed yet.
-    const isInstallable = !isInstalled;
+    const showInstallButton = !!deferredPrompt && !isAppInstalled;
 
     return (
-        <div className="bg-dark-bg min-h-screen flex">
+        <div className="flex h-screen bg-dark-bg text-dark-text-primary">
             <Sidebar
+                isOpen={isSidebarOpen}
+                setIsOpen={setIsSidebarOpen}
                 activeItem={activeView}
                 setActiveItem={setActiveView}
-                isOpen={isSidebarOpen}
-                setIsOpen={setSidebarOpen}
                 patients={patients}
                 selectedPatientId={selectedPatientId}
-                onSelectPatient={handleSelectPatient}
-                onRegisterNew={handleRegisterNew}
+                onSelectPatient={setSelectedPatientId}
+                onRegisterNew={() => setActiveView('Register Patient')}
                 onInstallClick={handleInstallClick}
-                isInstallable={isInstallable}
+                isInstallable={showInstallButton}
             />
-
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-                {/* Header */}
-                <div className="md:hidden flex items-center justify-between mb-6">
-                    <button onClick={() => setSidebarOpen(true)} className="text-dark-text-primary">
-                        {ICONS.menu}
-                    </button>
-                    <h1 className="text-xl font-bold text-dark-text-primary">HC</h1>
-                </div>
-
-                {renderContent()}
+                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden mb-4 text-dark-text-secondary">
+                   {ICONS.menu}
+                </button>
+                {renderActiveView()}
             </main>
-
-            {showInstallInstructions && <InstallInstructionsModal onClose={() => setShowInstallInstructions(false)} />}
         </div>
     );
 };
