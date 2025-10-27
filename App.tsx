@@ -7,6 +7,7 @@ import MedicationsView from './components/MedicationsView';
 import LabsAndImagesView from './components/LabsAndImagesView';
 import SettingsView from './components/SettingsView';
 import NewPatientView from './components/NewPatientView';
+import InstallInstructionsModal from './components/InstallInstructionsModal';
 import { ICONS, PATIENTS_DATA } from './constants';
 import type { Patient, Medication } from './types';
 
@@ -25,8 +26,21 @@ const App: React.FC = () => {
     const [activeView, setActiveView] = useState('Dashboard');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
+    const [isInstalled, setIsInstalled] = useState(false);
+    const [showInstallInstructions, setShowInstallInstructions] = useState(false);
+
+    const isIos = () => {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        // More robust check for iPad on iOS 13+
+        return /iphone|ipad|ipod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    };
 
     useEffect(() => {
+        // Check if running as a PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+            setIsInstalled(true);
+        }
+
         // PWA Setup: Create manifest and register service worker dynamically to make the app installable.
         const manifest = {
             "short_name": "HC",
@@ -64,7 +78,9 @@ const App: React.FC = () => {
         }
 
         return () => {
-            document.head.removeChild(linkEl);
+            if (document.head.contains(linkEl)) {
+                document.head.removeChild(linkEl);
+            }
         };
     }, []);
 
@@ -76,6 +92,7 @@ const App: React.FC = () => {
 
         const handleAppInstalled = () => {
             setInstallPromptEvent(null);
+            setIsInstalled(true);
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -142,6 +159,9 @@ const App: React.FC = () => {
                 }
                 setInstallPromptEvent(null);
             });
+        } else {
+            // Fallback for iOS and other browsers that don't support the prompt
+            setShowInstallInstructions(true);
         }
     };
 
@@ -187,6 +207,9 @@ const App: React.FC = () => {
                 return <Dashboard patient={selectedPatient} setActiveView={setActiveView} />;
         }
     };
+    
+    // Show install button if the app is not installed yet.
+    const isInstallable = !isInstalled;
 
     return (
         <div className="bg-dark-bg min-h-screen flex">
@@ -200,7 +223,7 @@ const App: React.FC = () => {
                 onSelectPatient={handleSelectPatient}
                 onRegisterNew={handleRegisterNew}
                 onInstallClick={handleInstallClick}
-                isInstallable={!!installPromptEvent}
+                isInstallable={isInstallable}
             />
 
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -214,6 +237,8 @@ const App: React.FC = () => {
 
                 {renderContent()}
             </main>
+
+            {showInstallInstructions && <InstallInstructionsModal onClose={() => setShowInstallInstructions(false)} />}
         </div>
     );
 };
