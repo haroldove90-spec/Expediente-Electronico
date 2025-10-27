@@ -1,14 +1,22 @@
 import React from 'react';
 import { ICONS } from '../constants';
+import type { Patient } from '../types';
 
 interface SidebarProps {
     activeItem: string;
     setActiveItem: (item: string) => void;
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
+    patients: Patient[];
+    selectedPatientId: string | null;
+    onSelectPatient: (patientId: string) => void;
+    onRegisterNew: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem, isOpen, setIsOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+    activeItem, setActiveItem, isOpen, setIsOpen,
+    patients, selectedPatientId, onSelectPatient, onRegisterNew
+}) => {
     const navItems = [
         { name: 'Dashboard', icon: ICONS.dashboard },
         { name: 'Historial Médico', icon: ICONS.history },
@@ -20,12 +28,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem, isOpen, se
 
     const handleItemClick = (name: string) => {
         setActiveItem(name);
+        if (name !== 'Register Patient') {
+            setIsOpen(false);
+        }
+    }
+    
+    const handleRegisterClick = () => {
+        onRegisterNew();
         setIsOpen(false);
     }
 
     return (
         <>
-            <aside className={`fixed inset-y-0 left-0 z-30 w-60 bg-dark-card flex-shrink-0 flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-dark-card flex-shrink-0 flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-4 flex items-center justify-between border-b border-dark-border">
                     <div className="flex items-center space-x-3">
                         {ICONS.menu}
@@ -35,7 +50,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem, isOpen, se
                         {ICONS.close}
                     </button>
                 </div>
-                <nav className="flex-1 p-4">
+                
+                <div className="p-4 space-y-4 border-b border-dark-border">
+                     <div>
+                        <label htmlFor="patient-select" className="block text-sm font-medium text-dark-text-secondary mb-1">Paciente Actual</label>
+                        <select 
+                            id="patient-select"
+                            value={selectedPatientId || ''}
+                            onChange={(e) => onSelectPatient(e.target.value)}
+                            className="w-full bg-dark-bg border border-dark-border rounded-md p-2 text-dark-text-primary focus:ring-accent-cyan focus:border-accent-cyan"
+                        >
+                            {patients.map(p => (
+                                <option key={p.demographics.patientId} value={p.demographics.patientId}>
+                                    {p.demographics.fullName}
+                                </option>
+                            ))}
+                        </select>
+                     </div>
+                     <button 
+                        onClick={handleRegisterClick}
+                        className="w-full bg-accent-cyan text-dark-bg font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity text-sm">
+                        + Registrar Nuevo Paciente
+                    </button>
+                </div>
+
+                <nav className="flex-1 p-4 overflow-y-auto">
                     <ul className="space-y-2">
                         {navItems.map(item => (
                             <li key={item.name}>
