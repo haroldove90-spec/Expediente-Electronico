@@ -77,52 +77,61 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 overflow-y-auto">
-                    <ul className="space-y-2">
-                        {navItems.map(item => (
-                            <li key={item.name}>
-                                <a
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleItemClick(item.name);
-                                    }}
-                                    className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                                        activeItem === item.name 
-                                        ? 'bg-dark-border text-white' 
+                <nav className="flex-1 p-4 overflow-y-auto flex flex-col justify-between">
+                    <div>
+                        <ul className="space-y-2">
+                            {navItems.map(item => (
+                                <li key={item.name}>
+                                    <a
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleItemClick(item.name);
+                                        }}
+                                        className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                                            activeItem === item.name 
+                                            ? 'bg-dark-border text-white' 
+                                            : 'text-dark-text-secondary hover:bg-dark-border hover:text-white'
+                                        }`}
+                                    >
+                                        {item.icon}
+                                        <span className="font-medium">{item.name}</span>
+                                    </a>
+                                </li>
+                            ))}
+                            <li>
+                                <button
+                                    onClick={onInstallClick}
+                                    disabled={!canInstall}
+                                    className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left ${
+                                        !canInstall 
+                                        ? 'text-dark-text-secondary/50 cursor-not-allowed' 
                                         : 'text-dark-text-secondary hover:bg-dark-border hover:text-white'
                                     }`}
                                 >
-                                    {item.icon}
-                                    <span className="font-medium">{item.name}</span>
-                                </a>
+                                    {ICONS.install}
+                                    <span className="font-medium">Instalar App</span>
+                                </button>
                             </li>
-                        ))}
-                    </ul>
-                    <div className="mt-6 pt-4 border-t border-dark-border">
-                        <a
-                            href="https://wa.me/5624222449"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center space-x-3 p-3 rounded-lg transition-colors bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20"
-                        >
-                            {ICONS.purchase}
-                            <span className="font-medium">Adquirir esta app</span>
-                        </a>
+                        </ul>
+                    </div>
+                    <div>
+                        <div className="mt-6 pt-4 border-t border-dark-border">
+                            <a
+                                href="https://wa.me/5624222449"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center space-x-3 p-3 rounded-lg transition-colors bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20"
+                            >
+                                {ICONS.purchase}
+                                <span className="font-medium">Adquirir esta app</span>
+                            </a>
+                             <p className="text-xs text-center text-dark-text-secondary/80 mt-3">
+                                Desarrollada por Harold Anguiano para App Design
+                            </p>
+                        </div>
                     </div>
                 </nav>
-
-                {canInstall && (
-                    <div className="p-4 border-t border-dark-border">
-                        <button 
-                            onClick={onInstallClick}
-                            className="w-full flex items-center justify-center space-x-3 p-3 rounded-lg transition-colors bg-dark-bg text-dark-text-secondary hover:bg-dark-border hover:text-white"
-                        >
-                            {ICONS.install}
-                            <span className="font-medium">Instalar App</span>
-                        </button>
-                    </div>
-                )}
             </aside>
             {isOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden" onClick={() => setIsOpen(false)}></div>}
         </>
