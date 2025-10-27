@@ -43,13 +43,13 @@ const LabsAndImagesView: React.FC<{ labResults: LabResult[], imagingResults: Ima
                 <h2 className="text-xl font-semibold text-dark-text-primary mb-4">Resultados de Imágenes</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {imagingResults.length > 0 ? imagingResults.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(img => (
-                        <div key={img.id} className="bg-dark-card rounded-lg shadow overflow-hidden group">
+                        <div key={img.id} className="bg-dark-card rounded-lg shadow overflow-hidden">
                             <img src={img.imageDataUrl} alt={img.studyName} className="w-full h-32 object-cover" />
                             <div className="p-4">
                                 <h3 className="font-bold text-dark-text-primary">{img.studyName}</h3>
                                 <p className="text-xs text-dark-text-secondary">{new Date(img.date).toLocaleDateString()}</p>
                                 <p className="text-sm text-dark-text-secondary mt-2 truncate">{img.report}</p>
-                                <a href={img.imageDataUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-cyan mt-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity">Ver imagen completa</a>
+                                <a href={img.imageDataUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-cyan mt-2 inline-block hover:underline">Ver imagen completa</a>
                             </div>
                         </div>
                     )) : (
