@@ -11,11 +11,14 @@ interface SidebarProps {
     selectedPatientId: string | null;
     onSelectPatient: (patientId: string) => void;
     onRegisterNew: () => void;
+    onInstallClick: () => void;
+    canInstall: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
     activeItem, setActiveItem, isOpen, setIsOpen,
-    patients, selectedPatientId, onSelectPatient, onRegisterNew
+    patients, selectedPatientId, onSelectPatient, onRegisterNew,
+    onInstallClick, canInstall
 }) => {
     const navItems = [
         { name: 'Dashboard', icon: ICONS.dashboard },
@@ -97,6 +100,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                         ))}
                     </ul>
                 </nav>
+
+                {canInstall && (
+                    <div className="p-4 border-t border-dark-border">
+                        <button 
+                            onClick={onInstallClick}
+                            className="w-full flex items-center justify-center space-x-3 p-3 rounded-lg transition-colors bg-dark-bg text-dark-text-secondary hover:bg-dark-border hover:text-white"
+                        >
+                            {ICONS.install}
+                            <span className="font-medium">Instalar App</span>
+                        </button>
+                    </div>
+                )}
             </aside>
             {isOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden" onClick={() => setIsOpen(false)}></div>}
         </>

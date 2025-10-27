@@ -24,6 +24,20 @@ const App: React.FC = () => {
     const [selectedPatientId, setSelectedPatientId] = useState<string | null>(patients.length > 0 ? patients[0].demographics.patientId : null);
     const [activeView, setActiveView] = useState('Dashboard');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setInstallPromptEvent(e);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
 
     const savePatients = (updatedPatients: Patient[]) => {
         setPatients(updatedPatients);
@@ -66,6 +80,22 @@ const App: React.FC = () => {
             return p;
         });
         savePatients(updatedPatients);
+    };
+
+    const handleInstallClick = () => {
+        if (!installPromptEvent) {
+            return;
+        }
+        const promptEvent = installPromptEvent as any;
+        promptEvent.prompt();
+        promptEvent.userChoice.then((choiceResult: { outcome: string }) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the A2HS prompt');
+            } else {
+                console.log('User dismissed the A2HS prompt');
+            }
+            setInstallPromptEvent(null);
+        });
     };
 
     const selectedPatient = useMemo(() => {
@@ -122,6 +152,8 @@ const App: React.FC = () => {
                 selectedPatientId={selectedPatientId}
                 onSelectPatient={handleSelectPatient}
                 onRegisterNew={handleRegisterNew}
+                onInstallClick={handleInstallClick}
+                canInstall={!!installPromptEvent}
             />
 
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
