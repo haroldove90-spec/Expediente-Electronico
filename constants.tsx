@@ -21,26 +21,55 @@ export const patientData: Patient = {
     },
   },
   medicalHistory: {
-    pathological: ['Diabetes Mellitus Tipo 2', 'Hipertensión'],
-    family: ['Padre con enfermedad cardíaca'],
-    nonPathological: ['No fumador'],
+    pathological: ['Diabetes Mellitus Tipo 2', 'Hipertensión', 'Dislipidemia'],
+    family: ['Padre con enfermedad cardíaca', 'Madre con Diabetes Mellitus Tipo 2'],
+    nonPathological: ['No fumador', 'Consume alcohol ocasionalmente'],
     allergies: ['Penicilina'],
     immunizations: [
       { vaccine: 'Influenza', date: '2023-10-15' },
+      { vaccine: 'Tétanos/Difteria/Tos ferina (Tdap)', date: '2022-08-20' },
+      { vaccine: 'Neumococo', date: '2021-05-10' },
     ],
   },
   consultations: [
     {
       date: '2024-05-10',
       reason: 'Control de Diabetes',
-      anamnesis: 'Paciente refiere buen control general.',
+      anamnesis: 'Paciente refiere buen control general. Sigue plan de alimentación y medicación.',
       physicalExam: {
         vitals: { bloodPressure: '120/80', heartRate: 72, temperature: 36.8, oxygenSaturation: 98 },
-        findings: 'Sin hallazgos agudos.',
+        findings: 'Sin hallazgos agudos. Pulsos pedios presentes y simétricos.',
       },
-      diagnoses: [{ code: 'E11.9', description: 'Diabetes mellitus tipo 2' }],
-      treatmentPlan: 'Continuar con medicación actual.',
+      diagnoses: [{ code: 'E11.9', description: 'Diabetes mellitus tipo 2 no complicada' }],
+      treatmentPlan: 'Continuar con medicación actual. Se solicita Hemoglobina Glicosilada (HbA1c). Próxima cita en 3 meses.',
       progressNotes: 'Estable.',
+    },
+    {
+      date: '2024-02-12',
+      reason: 'Control de Hipertensión',
+      anamnesis: 'Paciente refiere mareos ocasionales. Se ajusta dosis de antihipertensivo.',
+      physicalExam: {
+        vitals: { bloodPressure: '135/85', heartRate: 75, temperature: 37.0, oxygenSaturation: 99 },
+        findings: 'Ritmo cardíaco regular, sin soplos.',
+      },
+      diagnoses: [{ code: 'I10', description: 'Hipertensión esencial (primaria)' }],
+      treatmentPlan: 'Aumentar Losartán a 50mg c/12h. Monitoreo de presión arterial en casa.',
+      progressNotes: 'Pendiente de revaloración con nuevo esquema.',
+    },
+     {
+      date: '2023-11-20',
+      reason: 'Chequeo General Anual',
+      anamnesis: 'Paciente asintomático. Se realiza chequeo de rutina.',
+      physicalExam: {
+        vitals: { bloodPressure: '130/82', heartRate: 68, temperature: 36.5, oxygenSaturation: 98 },
+        findings: 'Examen físico dentro de límites normales.',
+      },
+      diagnoses: [
+          { code: 'E11.9', description: 'Diabetes mellitus tipo 2' },
+          { code: 'I10', description: 'Hipertensión esencial (primaria)' }
+        ],
+      treatmentPlan: 'Se solicitan laboratorios de control. Se refuerzan medidas higiénico-dietéticas.',
+      progressNotes: 'Paciente en buenas condiciones generales.',
     },
   ],
   labResults: [
@@ -51,6 +80,30 @@ export const patientData: Patient = {
       result: '130 mg/dL',
       referenceRange: '70-100',
       isAbnormal: true,
+    },
+    {
+      id: 'lab002',
+      testName: 'HbA1c',
+      date: '2024-05-10',
+      result: '7.2 %',
+      referenceRange: '4.0-5.6',
+      isAbnormal: true,
+    },
+    {
+      id: 'lab003',
+      testName: 'Colesterol Total',
+      date: '2024-02-12',
+      result: '210 mg/dL',
+      referenceRange: '< 200',
+      isAbnormal: true,
+    },
+     {
+      id: 'lab004',
+      testName: 'Creatinina',
+      date: '2024-02-12',
+      result: '0.9 mg/dL',
+      referenceRange: '0.7-1.2',
+      isAbnormal: false,
     }
   ],
   imagingResults: [
@@ -58,21 +111,39 @@ export const patientData: Patient = {
       id: 'img001',
       studyName: 'Rx Tórax',
       date: '2024-01-15',
-      report: 'Sin hallazgos agudos.',
+      report: 'Sin hallazgos patológicos agudos. Índice cardiotorácico normal.',
       thumbnailUrl: 'https://picsum.photos/seed/xray/200/150',
+    },
+    {
+      id: 'img002',
+      studyName: 'Ultrasonido Abdominal',
+      date: '2023-08-05',
+      report: 'Hígado con esteatosis leve. Resto de órganos sin alteraciones.',
+      thumbnailUrl: 'https://picsum.photos/seed/ultrasound/200/150',
+    },
+     {
+      id: 'img003',
+      studyName: 'Electrocardiograma',
+      date: '2024-02-12',
+      report: 'Ritmo sinusal, 75 lpm, sin signos de isquemia aguda.',
+      thumbnailUrl: 'https://picsum.photos/seed/ekg/200/150',
     },
   ],
   medications: [
     { name: 'Metformina', dosage: '850mg', route: 'c/12h', frequency: '', startDate: '2020-01-01', status: 'Active' },
-    { name: 'Metformina', dosage: '850mg', route: 'c/24h', frequency: '', startDate: '2022-05-10', status: 'Active' },
     { name: 'Losartán', dosage: '50mg', route: 'c/24h', frequency: '', startDate: '2021-03-01', status: 'Active' },
+    { name: 'Atorvastatina', dosage: '20mg', route: 'c/24h', frequency: '', startDate: '2023-11-20', status: 'Active' },
+    { name: 'Aspirina', dosage: '100mg', route: 'c/24h', frequency: '', startDate: '2021-03-01', status: 'Active' },
+    { name: 'Amoxicilina', dosage: '500mg', route: 'c/8h', frequency: '', startDate: '2023-04-01', endDate: '2023-04-08', status: 'Inactive' },
   ],
   alerts: [
     { id: 'alert01', type: 'Allergy', severity: 'High', message: 'ALERGIA: PENICILINA!' },
     { id: 'alert02', type: 'Chronic Condition', severity: 'Medium', message: 'Diagnóstico: Diabetes Mellitus Tipo 2' },
-    { id: 'alert03', type: 'Reminder', severity: 'Low', message: 'Próxima cita: 13/05/2024, Dr García (Cardiología)' },
+    { id: 'alert03', type: 'Reminder', severity: 'Low', message: 'Próxima cita: 10/08/2024, Dr. House (Control)' },
   ],
-  documents: [],
+  documents: [
+    { id: 'doc001', name: 'Consentimiento Informado General', type: 'Consent Form', date: '2022-01-15', url: '#' },
+  ],
 };
 
 export const ICONS = {
