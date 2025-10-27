@@ -99,6 +99,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                             </li>
                         ))}
                     </ul>
+                    <div className="mt-6 pt-4 border-t border-dark-border">
+                        <a
+                            href="https://wa.me/5624222449"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center space-x-3 p-3 rounded-lg transition-colors bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20"
+                        >
+                            {ICONS.purchase}
+                            <span className="font-medium">Adquirir esta app</span>
+                        </a>
+                    </div>
                 </nav>
 
                 {canInstall && (
