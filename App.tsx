@@ -7,7 +7,6 @@ import MedicationsView from './components/MedicationsView';
 import LabsAndImagesView from './components/LabsAndImagesView';
 import SettingsView from './components/SettingsView';
 import NewPatientView from './components/NewPatientView';
-import InstallInstructionsModal from './components/InstallInstructionsModal';
 import { ICONS, PATIENTS_DATA } from './constants';
 import type { Patient, Medication } from './types';
 
@@ -26,7 +25,6 @@ const App: React.FC = () => {
     const [activeView, setActiveView] = useState('Dashboard');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
-    const [showInstallInstructions, setShowInstallInstructions] = useState(false);
 
     useEffect(() => {
         // PWA Setup: Create manifest and register service worker dynamically to make the app installable.
@@ -36,7 +34,7 @@ const App: React.FC = () => {
             "description": "Un moderno y responsivo tablero de Historial Clínico Electrónico (HCE) para profesionales de la salud.",
             "icons": [{ "src": "/vite.svg", "type": "image/svg+xml", "sizes": "any" }],
             "start_url": ".",
-            "display": "standalone",
+            "display": "fullscreen",
             "theme_color": "#0F172A",
             "background_color": "#0F172A"
         };
@@ -76,10 +74,16 @@ const App: React.FC = () => {
             setInstallPromptEvent(e);
         };
 
+        const handleAppInstalled = () => {
+            setInstallPromptEvent(null);
+        };
+
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleAppInstalled);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, []);
 
@@ -138,8 +142,6 @@ const App: React.FC = () => {
                 }
                 setInstallPromptEvent(null);
             });
-        } else {
-            setShowInstallInstructions(true);
         }
     };
 
@@ -198,6 +200,7 @@ const App: React.FC = () => {
                 onSelectPatient={handleSelectPatient}
                 onRegisterNew={handleRegisterNew}
                 onInstallClick={handleInstallClick}
+                isInstallable={!!installPromptEvent}
             />
 
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -211,7 +214,6 @@ const App: React.FC = () => {
 
                 {renderContent()}
             </main>
-            {showInstallInstructions && <InstallInstructionsModal onClose={() => setShowInstallInstructions(false)} />}
         </div>
     );
 };

@@ -12,12 +12,13 @@ interface SidebarProps {
     onSelectPatient: (patientId: string) => void;
     onRegisterNew: () => void;
     onInstallClick: () => void;
+    isInstallable: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
     activeItem, setActiveItem, isOpen, setIsOpen,
     patients, selectedPatientId, onSelectPatient, onRegisterNew,
-    onInstallClick
+    onInstallClick, isInstallable
 }) => {
     const navItems = [
         { name: 'Dashboard', icon: ICONS.dashboard },
@@ -102,15 +103,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     </a>
                                 </li>
                             ))}
-                            <li>
-                                <button
-                                    onClick={handleInstallButtonClick}
-                                    className="w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left text-dark-text-secondary hover:bg-dark-border hover:text-white"
-                                >
-                                    {ICONS.install}
-                                    <span className="font-medium">Instalar App</span>
-                                </button>
-                            </li>
+                            {isInstallable && (
+                                <li>
+                                    <button
+                                        onClick={handleInstallButtonClick}
+                                        className="w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left text-dark-text-secondary hover:bg-dark-border hover:text-white"
+                                    >
+                                        {ICONS.install}
+                                        <span className="font-medium">Instalar App</span>
+                                    </button>
+                                </li>
+                            )}
                         </ul>
                     </div>
                     <div>
