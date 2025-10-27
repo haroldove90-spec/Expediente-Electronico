@@ -12,13 +12,12 @@ interface SidebarProps {
     onSelectPatient: (patientId: string) => void;
     onRegisterNew: () => void;
     onInstallClick: () => void;
-    canInstall: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
     activeItem, setActiveItem, isOpen, setIsOpen,
     patients, selectedPatientId, onSelectPatient, onRegisterNew,
-    onInstallClick, canInstall
+    onInstallClick
 }) => {
     const navItems = [
         { name: 'Dashboard', icon: ICONS.dashboard },
@@ -42,11 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
 
     const handleInstallButtonClick = () => {
-        if (canInstall) {
-            onInstallClick();
-        } else {
-            alert('La aplicación no se puede instalar en este momento.\n\nAsegúrate de estar usando un navegador compatible (como Chrome en escritorio o Android) y que la aplicación no esté ya instalada.');
-        }
+        onInstallClick();
     };
 
     return (
