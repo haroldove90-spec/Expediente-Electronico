@@ -1,5 +1,5 @@
 {
-  "name": "EHR Dashboard Pro",
-  "description": "A modern, responsive Electronic Health Record (EHR) dashboard for healthcare professionals to view and manage patient information efficiently.",
+  "name": "Historial Clinico",
+  "description": "Un moderno y responsivo tablero de Historial Clínico Electrónico (HCE) para profesionales de la salud, para ver y gestionar la información del paciente de manera eficiente.",
   "requestFramePermissions": []
 }

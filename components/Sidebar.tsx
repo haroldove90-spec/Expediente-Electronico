@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="p-4 flex items-center justify-between border-b border-dark-border">
                     <div className="flex items-center space-x-3">
                         {ICONS.menu}
-                        <h1 className="text-xl font-bold text-dark-text-primary">EHR</h1>
+                        <h1 className="text-xl font-bold text-dark-text-primary">HC</h1>
                     </div>
                     <button onClick={() => setIsOpen(false)} className="md:hidden text-dark-text-secondary">
                         {ICONS.close}

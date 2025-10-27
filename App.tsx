@@ -29,9 +29,9 @@ const App: React.FC = () => {
     useEffect(() => {
         // PWA Setup: Create manifest and register service worker dynamically to make the app installable.
         const manifest = {
-            "short_name": "EHR Pro",
-            "name": "EHR Dashboard Pro",
-            "description": "A modern, responsive Electronic Health Record (EHR) dashboard.",
+            "short_name": "HC",
+            "name": "Historial Clinico",
+            "description": "Un moderno y responsivo tablero de Historial Clínico Electrónico (HCE) para profesionales de la salud.",
             "icons": [{ "src": "/vite.svg", "type": "image/svg+xml", "sizes": "any" }],
             "start_url": ".",
             "display": "standalone",
@@ -47,7 +47,7 @@ const App: React.FC = () => {
 
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'ehr-dashboard-pro-cache-v1';
+                const CACHE_NAME = 'historial-clinico-cache-v1';
                 const urlsToCache = ['/', '/index.html'];
                 self.addEventListener('install', event => {
                     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
@@ -204,7 +204,7 @@ const App: React.FC = () => {
                     <button onClick={() => setSidebarOpen(true)} className="text-dark-text-primary">
                         {ICONS.menu}
                     </button>
-                    <h1 className="text-xl font-bold text-dark-text-primary">EHR</h1>
+                    <h1 className="text-xl font-bold text-dark-text-primary">HC</h1>
                 </div>
 
                 {renderContent()}
