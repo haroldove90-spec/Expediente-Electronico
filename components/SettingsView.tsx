@@ -8,12 +8,12 @@ const SettingsSection: React.FC<{title: string, children: React.ReactNode}> = ({
 );
 
 const Toggle: React.FC<{label: string, description: string, enabled: boolean}> = ({label, description, enabled}) => (
-     <div className="flex items-center justify-between">
+     <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h3 className="font-medium text-dark-text-primary">{label}</h3>
             <p className="text-sm text-dark-text-secondary">{description}</p>
         </div>
-        <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${enabled ? 'bg-accent-cyan' : 'bg-dark-border'}`}>
+        <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors flex-shrink-0 ${enabled ? 'bg-accent-cyan' : 'bg-dark-border'}`}>
             <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}/>
         </div>
     </div>

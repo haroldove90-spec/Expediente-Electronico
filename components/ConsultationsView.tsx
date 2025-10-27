@@ -25,9 +25,9 @@ const ConsultationCard: React.FC<{ consultation: Consultation }> = ({ consultati
 const ConsultationsView: React.FC<{ consultations: Consultation[] }> = ({ consultations }) => {
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
         <h1 className="text-3xl font-bold text-dark-text-primary">Consultas</h1>
-        <button className="bg-accent-cyan text-dark-bg font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+        <button className="bg-accent-cyan text-dark-bg font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity w-full sm:w-auto">
           + Nueva Consulta
         </button>
       </div>
